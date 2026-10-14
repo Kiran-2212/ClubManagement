@@ -25,7 +25,9 @@ api.interceptors.response.use(
     if (error?.response?.status === 401) {
       localStorage.removeItem('collegeClubToken');
       localStorage.removeItem('collegeClubUser');
-      window.location.href = '/login';
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
     } else {
       window.dispatchEvent(new CustomEvent('club-management-api-error', { detail: message }));
     }
