@@ -113,13 +113,6 @@ public class StudentService {
             throw new BadRequestException("Registration is closed for this event");
         }
 
-        Membership membership = membershipRepository.findByStudentAndClub(student, event.getClub())
-                .orElseThrow(() -> new BadRequestException("You must be an approved member of this club to register for events"));
-
-        if (membership.getStatus() != MembershipStatus.APPROVED) {
-            throw new BadRequestException("Your membership must be approved before you can register for the event");
-        }
-
         if (eventRegistrationRepository.existsByEventAndStudent(event, student)) {
             throw new BadRequestException("You are already registered for this event");
         }

@@ -5,6 +5,7 @@ import com.college.clubmanagement.repository.*;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -22,6 +23,21 @@ public class DataSeeder implements ApplicationRunner {
     private final AttendanceRepository attendanceRepository;
     private final FeedbackRepository feedbackRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${SEED_ADMIN_PASSWORD:}")
+    private String adminPassword;
+
+    @Value("${SEED_ADMIN_2_PASSWORD:}")
+    private String secondAdminPassword;
+
+    @Value("${SEED_ADMIN_3_PASSWORD:}")
+    private String thirdAdminPassword;
+
+    @Value("${SEED_CLUB_ADMIN_PASSWORD:}")
+    private String clubAdminPassword;
+
+    @Value("${SEED_STUDENT_PASSWORD:}")
+    private String studentPassword;
 
     public DataSeeder(UserRepository userRepository,
                       ClubRepository clubRepository,
@@ -45,20 +61,26 @@ public class DataSeeder implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        User systemAdmin = userRepository.findByEmail("admin@college.com").orElseGet(() -> {
-            User admin = new User("System Admin", "admin@college.com", passwordEncoder.encode("Admin@123"), Role.SYSTEM_ADMIN, "Administration", 2025);
-            return userRepository.save(admin);
-        });
+        // Demo accounts are opt-in so known default passwords are never installed implicitly.
+        if (adminPassword.isBlank()) {
+            return;
+        }
 
-        User clubAdmin = userRepository.findByEmail("clubadmin@college.com").orElseGet(() -> {
-            User admin = new User("Club Admin", "clubadmin@college.com", passwordEncoder.encode("Admin@123"), Role.CLUB_ADMIN, "Computer Science", 2024);
-            return userRepository.save(admin);
-        });
+        createOrConfigureSystemAdmin("System Admin", "admin@college.com", adminPassword);
+        if (!secondAdminPassword.isBlank()) {
+            createOrConfigureSystemAdmin("System Admin 2", "admin2@college.com", secondAdminPassword);
+        }
+        if (!thirdAdminPassword.isBlank()) {
+            createOrConfigureSystemAdmin("System Admin 3", "admin3@college.com", thirdAdminPassword);
+        }
 
-        User student = userRepository.findByEmail("student@college.com").orElseGet(() -> {
-            User s = new User("College Student", "student@college.com", passwordEncoder.encode("Student@123"), Role.STUDENT, "Computer Science", 2025);
-            return userRepository.save(s);
-        });
+        if (clubAdminPassword.isBlank() || studentPassword.isBlank()) {
+            return;
+        }
+
+        User clubAdmin = createSeedUser("Club Admin", "clubadmin@college.com", clubAdminPassword, Role.CLUB_ADMIN, "Computer Science", 2024);
+
+        User student = createSeedUser("College Student", "student@college.com", studentPassword, Role.STUDENT, "Computer Science", 2025);
 
         if (clubRepository.count() == 0) {
             Club techClub = clubRepository.save(new Club("Tech Innovation Club", "Build projects and attend hackathons.", "Technology", "Dr. Sharma", "", clubAdmin));
@@ -96,5 +118,24 @@ public class DataSeeder implements ApplicationRunner {
                 announcementRepository.save(new Announcement(artsClub, "Festival Preparations", "Volunteer registration is open for the upcoming annual fest."));
             }
         }
+    }
+
+    private User createSeedUser(String name, String email, String password, Role role, String department, Integer year) {
+        return userRepository.findByEmail(email).orElseGet(() -> {
+            User user = new User(name, email, passwordEncoder.encode(password), role, department, year);
+            return userRepository.save(user);
+        });
+    }
+
+    private User createOrConfigureSystemAdmin(String name, String email, String password) {
+        User admin = userRepository.findByEmail(email).orElseGet(User::new);
+        admin.setName(name);
+        admin.setEmail(email);
+        admin.setPassword(passwordEncoder.encode(password));
+        admin.setRole(Role.SYSTEM_ADMIN);
+        admin.setDepartment("Administration");
+        admin.setYear(2025);
+        admin.setEnabled(true);
+        return userRepository.save(admin);
     }
 }

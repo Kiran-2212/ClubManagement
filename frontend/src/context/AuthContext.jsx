@@ -2,12 +2,20 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem('collegeClubToken') || '');
-  const [user, setUser] = useState(() => {
+function readStoredUser() {
+  try {
     const storedUser = localStorage.getItem('collegeClubUser');
     return storedUser ? JSON.parse(storedUser) : null;
-  });
+  } catch {
+    localStorage.removeItem('collegeClubUser');
+    localStorage.removeItem('collegeClubToken');
+    return null;
+  }
+}
+
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(() => localStorage.getItem('collegeClubToken') || '');
+  const [user, setUser] = useState(readStoredUser);
 
   useEffect(() => {
     if (token) {

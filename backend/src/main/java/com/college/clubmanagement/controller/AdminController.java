@@ -48,7 +48,7 @@ public class AdminController {
     }
 
     @PostMapping("/admin/clubs")
-    public ResponseEntity<Club> createClub(@Valid @RequestBody ClubRequest request) {
+    public ResponseEntity<Club> createClub(@Valid @RequestBody CreateClubRequest request) {
         return ResponseEntity.ok(adminService.createClub(request));
     }
 

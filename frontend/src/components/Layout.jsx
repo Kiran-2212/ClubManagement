@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Layout({ title, children }) {
@@ -49,20 +49,20 @@ export default function Layout({ title, children }) {
 
   return (
     <>
-      <nav className="navbar">
+      <nav className={`navbar${isStudent ? ' student-navbar' : isClubAdmin ? ' club-admin-navbar' : isSystemAdmin ? ' system-admin-navbar' : ''}`}>
         <div>
           <strong>College Club Management</strong>
           <span style={{ marginLeft: 12, opacity: 0.8 }}>{user?.role}</span>
         </div>
         <div className="nav-links">
           {links.map((link) => (
-            <Link key={link.to} to={link.to}>{link.label}</Link>
+            <NavLink key={link.to} to={link.to} className={({ isActive }) => isActive ? 'is-active' : ''}>{link.label}</NavLink>
           ))}
           <button onClick={handleLogout}>Logout</button>
         </div>
       </nav>
 
-      <div className="page">
+      <div className={`page${isStudent ? ' student-page' : isClubAdmin ? ' club-admin-page' : isSystemAdmin ? ' system-admin-page' : ''}`}>
         <div className="dashboard-header">
           <h1>{title}</h1>
           <span className="badge">{user?.name || 'User'}</span>

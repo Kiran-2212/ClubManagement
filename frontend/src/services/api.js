@@ -21,7 +21,16 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message = error?.response?.data?.message || 'Something went wrong';
+    const responseData = error?.response?.data;
+    const fieldErrors = responseData?.errors;
+    const validationMessage = fieldErrors && Object.values(fieldErrors).length
+      ? Object.values(fieldErrors).join(' ')
+      : null;
+    const message = validationMessage
+      || responseData?.message
+      || (error?.response
+        ? `Request failed with status ${error.response.status}. Please try again.`
+        : 'Cannot reach the server. Check that the backend is running and the API URL is correct.');
     if (error?.response?.status === 401) {
       localStorage.removeItem('collegeClubToken');
       localStorage.removeItem('collegeClubUser');

@@ -59,7 +59,7 @@ spring.datasource.password=your-password
 
 ## Backend configuration
 
-The application reads database and JWT values from environment variables when available.
+The application reads database and JWT values from environment variables when available. For local runs, it also loads an optional `backend/.env` file. Copy `backend/.env.example` to `backend/.env`, then replace the MySQL password and JWT secret. The local `.env` file is ignored by Git.
 
 Example environment variables:
 
@@ -67,10 +67,15 @@ Example environment variables:
 export DB_URL='jdbc:mysql://localhost:3306/college_club_management?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC'
 export DB_USERNAME='root'
 export DB_PASSWORD='your-password'
-export JWT_SECRET='change-this-secret-key'
+export JWT_SECRET="$(openssl rand -base64 32)"
+export SEED_ADMIN_PASSWORD='admin123'
+export SEED_ADMIN_2_PASSWORD='admin123'
+export SEED_ADMIN_3_PASSWORD='admin123'
+export SEED_CLUB_ADMIN_PASSWORD='choose-another-unique-password'
+export SEED_STUDENT_PASSWORD='choose-a-third-unique-password'
 ```
 
-The frontend uses the Vite `/api` proxy during development. Set `VITE_API_BASE_URL` only when the API is hosted at a different base path. The built-in database and JWT defaults are for local development only; configure strong credentials and a long random JWT secret before deployment.
+The frontend uses the Vite `/api` proxy during development. Set `VITE_API_BASE_URL` only when the API is hosted at a different base path. Database passwords and JWT secrets have no built-in defaults. `JWT_SECRET` must contain at least 32 characters for HS256. For local development, set `SEED_ADMIN_PASSWORD`, `SEED_ADMIN_2_PASSWORD`, and `SEED_ADMIN_3_PASSWORD` to create three system admin accounts: `admin@college.com`, `admin2@college.com`, and `admin3@college.com`. The VS Code example below uses `admin123` for all three local accounts, as requested. When these variables are set, the seeder configures the matching accounts as system admins and applies the supplied passwords. Do not use these shared demo credentials outside local development. The optional club-admin and student accounts use `SEED_CLUB_ADMIN_PASSWORD` and `SEED_STUDENT_PASSWORD`; sample data is created when both are set along with the first admin password.
 
 ## Start backend
 
@@ -96,14 +101,6 @@ The frontend runs at:
 
 - http://localhost:5173
 
-## Test login credentials
-
-These are seeded automatically when the app starts:
-
-- System Admin: `admin@college.com` / `Admin@123`
-- Club Admin: `clubadmin@college.com` / `Admin@123`
-- Student: `student@college.com` / `Student@123`
-
 ## API overview
 
 - `POST /api/auth/register`
@@ -118,9 +115,34 @@ These are seeded automatically when the app starts:
 
 - If MySQL is not running, the backend will fail to connect.
 - If a port is already used, update the relevant config and restart.
-- If JWT errors appear, verify the `JWT_SECRET` property is set.
+- If JWT errors appear, verify `JWT_SECRET` is set to a random value of at least 32 characters.
 - For CORS issues, make sure the frontend runs on `http://localhost:5173`.
 
 ## Notes
 
-This project is designed as a beginner-friendly academic application. It uses a clean layered architecture and includes seed data so the app can be demonstrated quickly after setup.
+This project is designed as a beginner-friendly academic application. It uses a layered architecture and can load sample records when the optional seeded accounts are configured.
+
+## Run locally in VS Code on macOS
+
+1. Install Java 17, Maven 3.9+, Node.js 18+, MySQL 8+, and the VS Code Extension Pack for Java.
+2. Open this project folder in VS Code. Start MySQL and create the database with `CREATE DATABASE college_club_management;` (the JDBC URL can also create it if the MySQL account has permission).
+3. Copy `backend/.env.example` to `backend/.env` and replace `DB_PASSWORD` and `JWT_SECRET` with local values. Keep the `.env` file private; Git ignores it.
+4. In VS Code, open **Terminal → New Terminal** and start the backend:
+
+   ```bash
+   cd backend
+   mvn spring-boot:run
+   ```
+
+   The seed variables are optional. Uncomment and set them in `backend/.env` if you want seeded demo accounts; otherwise, register users yourself. In VS Code, the **Run and Debug** panel now includes **Run Club Management API** and loads `backend/.env` for you.
+5. Open a second VS Code terminal and start the frontend:
+
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+6. Open `http://localhost:5173`. Register a student or sign in using an account created through the optional seed configuration. Keep both terminals running. Stop either server with **Control+C**.
+
+For subsequent sessions, the backend loads values from `backend/.env`. To point Vite at a separately hosted API, set `VITE_API_BASE_URL` in the frontend terminal before starting Vite.

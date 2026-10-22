@@ -75,13 +75,10 @@ public class ClubAdminService {
         return dashboard;
     }
 
+    @Transactional(readOnly = true)
     public List<Membership> getMembershipRequests() {
         User admin = userService.getCurrentUser();
-        List<Membership> pending = new ArrayList<>();
-        for (Club club : clubRepository.findByClubAdmin(admin)) {
-            pending.addAll(membershipRepository.findByClubAndStatus(club, MembershipStatus.PENDING));
-        }
-        return pending;
+        return membershipRepository.findByClub_ClubAdminAndStatus(admin, MembershipStatus.PENDING);
     }
 
     public Membership approveMembership(Long id) {

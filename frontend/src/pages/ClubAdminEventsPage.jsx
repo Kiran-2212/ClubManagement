@@ -6,6 +6,7 @@ export default function ClubAdminEventsPage() {
   const [events, setEvents] = useState([]);
   const [clubs, setClubs] = useState([]);
   const [clubId, setClubId] = useState('');
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -17,6 +18,7 @@ export default function ClubAdminEventsPage() {
   const [form, setForm] = useState({ title: '', description: '', date: '', time: '09:00', venue: '', capacity: 50, status: 'UPCOMING' });
 
   const loadData = async () => {
+    setLoading(true);
     try {
       const [clubResponse, eventResponse] = await Promise.all([
         api.get('/club-admin/clubs'),
@@ -24,10 +26,14 @@ export default function ClubAdminEventsPage() {
       ]);
       setClubs(clubResponse.data);
       setEvents(eventResponse.data);
-      setClubId((current) => current || String(clubResponse.data[0]?.id || ''));
+      setClubId((current) => clubResponse.data.some((club) => String(club.id) === current)
+        ? current
+        : String(clubResponse.data[0]?.id || ''));
       setError('');
     } catch (err) {
       setError(err.message || 'Unable to load club events');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,9 +144,16 @@ export default function ClubAdminEventsPage() {
     <Layout title="Manage Events">
       {error && <p className="error-box" role="alert">{error}</p>}
       {notice && <p className="success-box" role="status">{notice}</p>}
+      {!loading && !error && clubs.length === 0 && (
+        <div className="club-admin-empty-panel">
+          <strong>No club is assigned to this account</strong>
+          <p>A System Admin must assign a club to this Club Admin account before it can create events.</p>
+        </div>
+      )}
       <form onSubmit={handleCreate}>
         <label>Club
           <select value={clubId} onChange={(e) => setClubId(e.target.value)} required disabled={clubs.length === 0}>
+            <option value="" disabled>{loading ? 'Loading clubs…' : clubs.length ? 'Select a club' : 'No clubs assigned'}</option>
             {clubs.map((club) => <option key={club.id} value={club.id}>{club.name}</option>)}
           </select>
         </label>

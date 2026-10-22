@@ -5,7 +5,9 @@ import com.college.clubmanagement.entity.*;
 import com.college.clubmanagement.exception.BadRequestException;
 import com.college.clubmanagement.exception.ResourceNotFoundException;
 import com.college.clubmanagement.repository.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,6 +23,7 @@ public class AdminService {
     private final EventRegistrationRepository eventRegistrationRepository;
     private final AttendanceRepository attendanceRepository;
     private final AnnouncementRepository announcementRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AdminService(UserRepository userRepository,
                         ClubRepository clubRepository,
@@ -28,7 +31,8 @@ public class AdminService {
                         EventRepository eventRepository,
                         EventRegistrationRepository eventRegistrationRepository,
                         AttendanceRepository attendanceRepository,
-                        AnnouncementRepository announcementRepository) {
+                        AnnouncementRepository announcementRepository,
+                        PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.clubRepository = clubRepository;
         this.membershipRepository = membershipRepository;
@@ -36,6 +40,7 @@ public class AdminService {
         this.eventRegistrationRepository = eventRegistrationRepository;
         this.attendanceRepository = attendanceRepository;
         this.announcementRepository = announcementRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Map<String, Object> getDashboard() {
@@ -87,11 +92,38 @@ public class AdminService {
         return clubRepository.findAll();
     }
 
-    public Club createClub(ClubRequest request) {
-        User clubAdmin = userRepository.findById(request.clubAdminId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.clubAdminId()));
-        if (clubAdmin.getRole() != Role.CLUB_ADMIN) {
-            throw new BadRequestException("Selected club admin user must have CLUB_ADMIN role");
+    @Transactional
+    public Club createClub(CreateClubRequest request) {
+        if (request.clubAdminId() != null && request.newClubAdmin() != null) {
+            throw new BadRequestException("Choose an existing club admin or create a new one, not both");
+        }
+
+        User clubAdmin;
+        if (request.newClubAdmin() != null) {
+            NewClubAdminRequest account = request.newClubAdmin();
+            String email = account.email().trim();
+            if (userRepository.existsByEmail(email)) {
+                throw new BadRequestException("An account with that email already exists");
+            }
+
+            clubAdmin = new User(
+                    account.name().trim(),
+                    email,
+                    passwordEncoder.encode(account.password()),
+                    Role.CLUB_ADMIN,
+                    null,
+                    null
+            );
+            clubAdmin.setEnabled(true);
+            clubAdmin = userRepository.save(clubAdmin);
+        } else if (request.clubAdminId() != null) {
+            clubAdmin = userRepository.findById(request.clubAdminId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + request.clubAdminId()));
+            if (clubAdmin.getRole() != Role.CLUB_ADMIN) {
+                throw new BadRequestException("Selected club admin user must have CLUB_ADMIN role");
+            }
+        } else {
+            throw new BadRequestException("Select an existing club admin or create a new club admin account");
         }
 
         Club club = new Club(

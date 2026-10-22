@@ -11,14 +11,14 @@ export default function SystemAdminDashboardPage() {
 
   return (
     <Layout title="System Admin Dashboard">
-      <div className="card-grid">
-        <div className="card"><h3>Total Users</h3><div className="metric">{dashboard.totalUsers ?? 0}</div></div>
-        <div className="card"><h3>Students</h3><div className="metric">{dashboard.totalStudents ?? 0}</div></div>
-        <div className="card"><h3>Club Admins</h3><div className="metric">{dashboard.totalClubAdmins ?? 0}</div></div>
-        <div className="card"><h3>Clubs</h3><div className="metric">{dashboard.totalClubs ?? 0}</div></div>
-        <div className="card"><h3>Events</h3><div className="metric">{dashboard.totalEvents ?? 0}</div></div>
-        <div className="card"><h3>Registrations</h3><div className="metric">{dashboard.totalRegistrations ?? 0}</div></div>
-      </div>
+      <section className="system-admin-stat-grid" aria-label="Campus summary">
+        <article className="system-admin-stat-card"><span>Total users</span><strong>{dashboard.totalUsers ?? 0}</strong><small>All campus accounts</small></article>
+        <article className="system-admin-stat-card"><span>Students</span><strong>{dashboard.totalStudents ?? 0}</strong><small>Registered students</small></article>
+        <article className="system-admin-stat-card"><span>Club admins</span><strong>{dashboard.totalClubAdmins ?? 0}</strong><small>Club management accounts</small></article>
+        <article className="system-admin-stat-card"><span>Clubs</span><strong>{dashboard.totalClubs ?? 0}</strong><small>Campus communities</small></article>
+        <article className="system-admin-stat-card"><span>Events</span><strong>{dashboard.totalEvents ?? 0}</strong><small>Created across clubs</small></article>
+        <article className="system-admin-stat-card"><span>Registrations</span><strong>{dashboard.totalRegistrations ?? 0}</strong><small>Student event sign-ups</small></article>
+      </section>
     </Layout>
   );
 }

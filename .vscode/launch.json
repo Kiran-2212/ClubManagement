@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Run Club Management API",
+      "request": "launch",
+      "mainClass": "com.college.clubmanagement.ClubManagementApplication",
+      "projectName": "club-management",
+      "cwd": "${workspaceFolder}/backend",
+      "envFile": "${workspaceFolder}/backend/.env"
+    }
+  ]
+}
